@@ -23,8 +23,39 @@
   <script type="text/javascript">
     var scene = document.querySelector('a-scene');
     var reader  = new FileReader();
+    var currentScale = 0.1;
+    var currentElement = null;
     var cursor = document.querySelector('#my-cursor');
+    window.addEventListener("contextmenu", function(event) {
+      if (currentElement) {
+        var el = document.createElement('a-entity');
+        el.setAttribute('stl-model', currentElement.getAttribute('stl-model'));
+        el.setAttribute('scale', currentElement.getAttribute('scale'));
+        addEntityOnCursor(el);
+      }
+      event.preventDefault();
+    });
+    window.addEventListener("wheel", function(event) {
+      var delta = 0.001;
+      if (event.shiftKey)
+        delta = 0.01;
 
+      if (event.deltaY > 0) {
+        delta = -delta;
+      }
+
+      currentScale += delta;
+      if (currentScale <= 0)
+        currentScale = 0.001;
+
+      if (currentElement)
+      currentElement.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
+
+
+      console.log(currentScale)
+      event.preventDefault();
+      return false;
+    }, false);
     scene.addEventListener("drag-and-drop", function(event){
       var file = event.detail.file;
 
@@ -38,17 +69,21 @@
       if (el) {
         reader.readAsDataURL(file);
       }
+      addEntityOnCursor(el);
 
+    });
 
+    function addEntityOnCursor(el) {
+      console.log(el)
       var rotation = cursor.getAttribute('rotation');
       var rotation = {x: THREE.Math.radToDeg(cursor.object3D.rotation.x), y: THREE.Math.radToDeg(cursor.object3D.rotation.y), z: THREE.Math.radToDeg(cursor.object3D.rotation.z)};
       var position = cursor.getAttribute('position');
       el.setAttribute('position',{x: position.x, y: position.y, z: position.z});
       el.setAttribute('rotation', {x:rotation.x, y:rotation.y, z:rotation.z});
-      el.setAttribute('scale', {x:0.01, y:0.01, z:0.01});
-
+      el.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
+      currentElement = el;
       scene.appendChild(el);
-    });
+    }
   </script>
 
 
