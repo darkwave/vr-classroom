@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Hello, World! - A-Frame</title>
+    <meta name="description" content="Hello, World! - A-Frame">
+    <script src="./js/aframe.min.js"></script>
+    <script src="./js/aframe-stl-model-component.min.js"></script>
+    <script src="./js/aframe-drag-and-drop-component.min.js"></script>
+    <script src="./js/aframe-crawling-cursor.min.js"></script>
+  </head>
+  <body>
+    <a-scene drag-and-drop>
+      <a-camera raycaster crawling-cursor="target: #my-cursor"></a-camera>
+      <a-ring id="my-cursor"></a-ring>
+      <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
+      <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
+      <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
+      <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
+      <a-sky color="#ECECEC"></a-sky>
+    </a-scene>
+  </body>
+  <script type="text/javascript">
+    var scene = document.querySelector('a-scene');
+    var reader  = new FileReader();
+    var cursor = document.querySelector('#my-cursor');
+
+    scene.addEventListener("drag-and-drop", function(event){
+      var file = event.detail.file;
+
+      var el = document.createElement('a-entity');
+
+
+      reader.addEventListener("load", function () {
+        el.setAttribute('stl-model', {src:reader.result});
+      }, false);
+
+      if (el) {
+        reader.readAsDataURL(file);
+      }
+
+
+      var rotation = cursor.getAttribute('rotation');
+      var rotation = {x: THREE.Math.radToDeg(cursor.object3D.rotation.x), y: THREE.Math.radToDeg(cursor.object3D.rotation.y), z: THREE.Math.radToDeg(cursor.object3D.rotation.z)};
+      var position = cursor.getAttribute('position');
+      el.setAttribute('position',{x: position.x, y: position.y, z: position.z});
+      el.setAttribute('rotation', {x:rotation.x, y:rotation.y, z:rotation.z});
+      el.setAttribute('scale', {x:0.01, y:0.01, z:0.01});
+
+      scene.appendChild(el);
+    });
+  </script>
+
+
+</html>
