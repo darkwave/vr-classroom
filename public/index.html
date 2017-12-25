@@ -8,24 +8,51 @@
     <script src="./js/aframe-stl-model-component.min.js"></script>
     <script src="./js/aframe-drag-and-drop-component.min.js"></script>
     <script src="./js/aframe-crawling-cursor.min.js"></script>
+    <style media="screen">
+    #toolbar {
+      padding: 20px;
+    }
+    #addEntity {
+      color: #666;
+      font-size: 30px;
+      border-color: #666;
+      border-width: 2px;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+    </style>
   </head>
   <body>
     <a-scene drag-and-drop>
       <a-camera raycaster crawling-cursor="target: #my-cursor"></a-camera>
-      <a-ring id="my-cursor"></a-ring>
+      <a-entity id="my-cursor"></a-entity>
       <a-box position="-1 0.5 -3" rotation="0 45 0" color="#4CC3D9"></a-box>
       <a-sphere position="0 1.25 -5" radius="1.25" color="#EF2D5E"></a-sphere>
       <a-cylinder position="1 0.75 -3" radius="0.5" height="1.5" color="#FFC65D"></a-cylinder>
       <a-plane position="0 0 -4" rotation="-90 0 0" width="4" height="4" color="#7BC8A4"></a-plane>
       <a-sky color="#ECECEC"></a-sky>
     </a-scene>
+    <div id="toolbar" style="position:absolute; top:0px; left:0px; z-index:1000;">
+        <!-- your overlay content here -->
+        <button id="addEntity">+</button>
+    </div>
   </body>
   <script type="text/javascript">
     var scene = document.querySelector('a-scene');
     var reader  = new FileReader();
-    var currentScale = 0.1;
+    var currentScale = 0.01;
     var currentElement = null;
-    var cursor = document.querySelector('#my-cursor');
+    var cursor3D = document.querySelector('#my-cursor');
+    document.querySelector('#addEntity').addEventListener('click', function(event) {
+      if (currentElement) {
+        var el = document.createElement('a-entity');
+        el.setAttribute('stl-model', currentElement.getAttribute('stl-model'));
+        el.setAttribute('scale', currentElement.getAttribute('scale'));
+        addEntityOnCursor(el);
+      }
+    }, false);
+
     window.addEventListener("contextmenu", function(event) {
       if (currentElement) {
         var el = document.createElement('a-entity');
@@ -50,7 +77,7 @@
 
       if (currentElement)
       currentElement.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
-
+      cursor3D.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
 
       console.log(currentScale)
       event.preventDefault();
@@ -64,6 +91,8 @@
 
       reader.addEventListener("load", function () {
         el.setAttribute('stl-model', {src:reader.result});
+        cursor3D.setAttribute('stl-model', el.getAttribute('stl-model'));
+
       }, false);
 
       if (el) {
@@ -75,12 +104,14 @@
 
     function addEntityOnCursor(el) {
       console.log(el)
-      var rotation = cursor.getAttribute('rotation');
-      var rotation = {x: THREE.Math.radToDeg(cursor.object3D.rotation.x), y: THREE.Math.radToDeg(cursor.object3D.rotation.y), z: THREE.Math.radToDeg(cursor.object3D.rotation.z)};
-      var position = cursor.getAttribute('position');
+      //var rotation = cursor3D.getAttribute('rotation');
+      var rotation = {x: THREE.Math.radToDeg(cursor3D.object3D.rotation.x), y: THREE.Math.radToDeg(cursor3D.object3D.rotation.y), z: THREE.Math.radToDeg(cursor3D.object3D.rotation.z)};
+      var position = cursor3D.getAttribute('position');
       el.setAttribute('position',{x: position.x, y: position.y, z: position.z});
       el.setAttribute('rotation', {x:rotation.x, y:rotation.y, z:rotation.z});
       el.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
+      cursor3D.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
+
       currentElement = el;
       scene.appendChild(el);
     }
