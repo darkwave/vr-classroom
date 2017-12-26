@@ -10,21 +10,68 @@
     <script src="./js/aframe-crawling-cursor.min.js"></script>
     <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
   </head>
+  <style media="screen">
+    #toolbar {
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      background-color: #fff;
+    }
+    .active {
+      background-color: #f0f;
+    }
+  </style>
   <body>
     <a-scene drag-and-drop>
-      <a-camera raycaster crawling-cursor="target: #my-cursor"></a-camera>
+      <a-camera raycaster crawling-cursor="target: #my-cursor"><a-cursor></a-cursor></a-camera>
       <a-entity id="my-cursor"></a-entity>
       <a-entity environment="preset: default;"></e-entity>
     </a-scene>
+    <div id="toolbar">
+      <button id="add" class="active" type="button">ADD</button>
+      <button id="remove" type="button">REMOVE</button>
+      <button id="edit" type="button">EDIT</button>
+    </div>
   </body>
   <script type="text/javascript">
-  var scene = document.querySelector('a-scene');
+  const ADD = 0;
+  const REMOVE = 1;
+  const EDIT = 2;
+  var state = ADD;
+
   var cursor3D = document.querySelector('#my-cursor');
+
+  document.querySelector('#add').addEventListener('click', function() {
+    state = ADD;
+    cursor3D.setAttribute('visible', true);
+    document.querySelector('.active').classList.toggle('active');
+    document.querySelector('#add').classList.toggle('active');
+  });
+  document.querySelector('#remove').addEventListener('click', function() {
+    state = REMOVE;
+    cursor3D.setAttribute('visible', false);
+    document.querySelector('.active').classList.toggle('active');
+    document.querySelector('#remove').classList.toggle('active');
+
+  });
+  document.querySelector('#edit').addEventListener('click', function() {
+    state = EDIT;
+    cursor3D.setAttribute('visible', false);
+    document.querySelector('.active').classList.toggle('active');
+    document.querySelector('#edit').classList.toggle('active');
+
+  });
+
+  console.log(state);
+  var scene = document.querySelector('a-scene');
   var currentScale = 0.01;
+  var selected = null;
 
 
   var reader  = new FileReader();
   reader.addEventListener("load", function () {
+    if (state != ADD)
+      return;
     cursor3D.setAttribute('stl-model', {src:reader.result});
     cursor3D.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
 
@@ -37,7 +84,7 @@
     });
 
     window.addEventListener("contextmenu", function(event) {
-      if (cursor3D.getAttribute('stl-model') != null) {
+      if (state == ADD && cursor3D.getAttribute('stl-model') != null) {
         var el = document.createElement('a-entity');
         el.setAttribute('stl-model', cursor3D.getAttribute('stl-model'));
         el.setAttribute('scale', cursor3D.getAttribute('scale'));
@@ -45,9 +92,41 @@
         var position = cursor3D.getAttribute('position');
         el.setAttribute('position',{x: position.x, y: position.y, z: position.z});
         el.setAttribute('rotation', {x:rotation.x, y:rotation.y, z:rotation.z});
+        el.addEventListener('raycaster-intersected', function () {
+          selected = el;
+          //console.log(selected);
+
+        });
+        el.addEventListener('raycaster-intersected-cleared', function () {
+          selected = null;
+          //console.log(selected);
+
+        });
         scene.appendChild(el);
+      } else if (state == REMOVE && selected) {
+        selected.parentNode.removeChild(selected);
+        selected = null;
       }
       event.preventDefault();
     });
+    //
+    window.addEventListener("wheel", function(event) {
+      if (state != EDIT || !selected)
+      return;
+
+      var currentScale = selected.getAttribute('scale').x;
+      var delta = 0.001;
+      if (event.shiftKey)
+        delta = 0.01;
+      if (event.deltaY > 0) {
+        delta = -delta;
+      }
+      currentScale += delta;
+      if (currentScale <= 0)
+        currentScale = 0.001;
+
+      selected.setAttribute('scale', {x: currentScale, y: currentScale, z: currentScale});
+      return true;
+    },true)
   </script>
 </html>
