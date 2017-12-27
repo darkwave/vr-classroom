@@ -24,8 +24,8 @@
   <body>
     <a-scene drag-and-drop>
       <a-camera raycaster crawling-cursor="target: #my-cursor"><a-cursor></a-cursor></a-camera>
-      <a-entity id="my-cursor"></a-entity>
-      <a-entity environment="preset: default;"></e-entity>
+      <a-entity id="my-cursor" rotation="-90 0 0"></a-entity>
+      <a-entity environment="preset: egypt;"></e-entity>
     </a-scene>
     <div id="toolbar">
       <button id="add" class="active" type="button">ADD</button>
@@ -64,7 +64,8 @@
 
   console.log(state);
   var scene = document.querySelector('a-scene');
-  var currentScale = 0.01;
+  var initialScale = 0.01;
+  var rotationYOffset = 0;
   var selected = null;
 
 
@@ -73,7 +74,7 @@
     if (state != ADD)
       return;
     cursor3D.setAttribute('stl-model', {src:reader.result});
-    cursor3D.setAttribute('scale', {x:currentScale, y:currentScale, z:currentScale});
+    cursor3D.setAttribute('scale', {x:initialScale, y:initialScale, z:initialScale});
 
   }, false);
 
@@ -111,21 +112,43 @@
     });
     //
     window.addEventListener("wheel", function(event) {
-      if (state != EDIT || !selected)
-      return;
-
-      var currentScale = selected.getAttribute('scale').x;
-      var delta = 0.001;
-      if (event.shiftKey)
-        delta = 0.01;
-      if (event.deltaY > 0) {
-        delta = -delta;
+      var currentlySelected;
+      if (state == ADD) {
+        currentlySelected = cursor3D;
+      } else if (state == EDIT) {
+        currentlySelected = selected;
       }
-      currentScale += delta;
-      if (currentScale <= 0)
-        currentScale = 0.001;
 
-      selected.setAttribute('scale', {x: currentScale, y: currentScale, z: currentScale});
+      if (!currentlySelected)
+        return;
+
+      if (!event.ctrlKey) {
+        var currentScale = currentlySelected.getAttribute('scale').x;
+        var delta = 0.001;
+        if (event.shiftKey)
+          delta = 0.01;
+        if (event.deltaY > 0) {
+          delta = -delta;
+        }
+        currentScale += delta;
+        if (currentScale <= 0)
+          currentScale = 0.001;
+
+        currentlySelected.setAttribute('scale', {x: currentScale, y: currentScale, z: currentScale});
+      } else {
+        var currentRotation = currentlySelected.getAttribute('rotation');
+        var delta = 5;
+        if (event.shiftKey)
+          delta = 10;
+        if (event.deltaY > 0) {
+          delta = -delta;
+        }
+        currentRotation.y += delta;
+
+        currentlySelected.setAttribute('rotation', {x: currentRotation.x, y: currentRotation.y, z: currentRotation.z});
+        console.log(currentRotation.y);
+      }
+      event.preventDefault();
       return true;
     },true)
   </script>
