@@ -13,12 +13,21 @@
   <style media="screen">
     #toolbar {
       position: absolute;
-      top: 10px;
-      left: 20px;
-      background-color: #fff;
+      top: 30px;
+      left: 30px;
+      background-color: #ffffff99;
+      padding: 5px;
+      border-radius: 20px;
+    }
+    button, input {
+      padding: 5px;
+      border-radius: 20px;
+      border-color: transparent;
+      font-weight: bold;
+      color: #333;
     }
     .active {
-      background-color: #f0f;
+      background-color: #aaa;
     }
   </style>
   <body>
@@ -28,6 +37,7 @@
       <a-entity environment="preset: egypt;"></e-entity>
     </a-scene>
     <div id="toolbar">
+      <input id="colorWell" type="color" value="#ffffff"></button>
       <button id="add" class="active" type="button">ADD</button>
       <button id="remove" type="button">REMOVE</button>
       <button id="edit" type="button">EDIT</button>
@@ -38,11 +48,31 @@
   const REMOVE = 1;
   const EDIT = 2;
   var state = ADD;
-
+  var colorWell = document.querySelector("#colorWell");
   var cursor3D = document.querySelector('#my-cursor');
+  var scene = document.querySelector('a-scene');
+  var initialScale = 0.01;
+  var rotationYOffset = 0;
+  var selected = null;
+
+
+  var reader  = new FileReader();
+  colorWell.addEventListener("input", function(event){
+    if (state == ADD)
+      cursor3D.setAttribute('material', 'color', event.target.value);
+
+    if (state == EDIT && selected)
+      selected.setAttribute('material', {color: event.target.value});
+
+  });
+  colorWell.addEventListener('click', function(event) {
+    if (state == EDIT && selected)
+      event.target.value = selected.getAttribute('material').color;
+  });
 
   document.querySelector('#add').addEventListener('click', function() {
     state = ADD;
+    colorWell.value = cursor3D.getAttribute('material').color;
     cursor3D.setAttribute('visible', true);
     document.querySelector('.active').classList.toggle('active');
     document.querySelector('#add').classList.toggle('active');
@@ -62,19 +92,12 @@
 
   });
 
-  console.log(state);
-  var scene = document.querySelector('a-scene');
-  var initialScale = 0.01;
-  var rotationYOffset = 0;
-  var selected = null;
-
-
-  var reader  = new FileReader();
   reader.addEventListener("load", function () {
     if (state != ADD)
       return;
     cursor3D.setAttribute('stl-model', {src:reader.result});
     cursor3D.setAttribute('scale', {x:initialScale, y:initialScale, z:initialScale});
+    cursor3D.setAttribute('material', 'color', document.querySelector('#colorWell').value);
 
   }, false);
 
@@ -91,8 +114,10 @@
         el.setAttribute('scale', cursor3D.getAttribute('scale'));
         var rotation = {x: THREE.Math.radToDeg(cursor3D.object3D.rotation.x), y: THREE.Math.radToDeg(cursor3D.object3D.rotation.y), z: THREE.Math.radToDeg(cursor3D.object3D.rotation.z)};
         var position = cursor3D.getAttribute('position');
+        var material = cursor3D.getAttribute('material');
         el.setAttribute('position',{x: position.x, y: position.y, z: position.z});
         el.setAttribute('rotation', {x:rotation.x, y:rotation.y, z:rotation.z});
+        el.setAttribute('material', 'color', material.color );
         el.addEventListener('raycaster-intersected', function () {
           selected = el;
           //console.log(selected);
