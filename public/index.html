@@ -21,7 +21,7 @@
       padding: 5px;
       border-radius: 20px;
     }
-    button, input {
+    button, input, select {
       padding: 5px;
       border-radius: 20px;
       border-color: transparent;
@@ -31,15 +31,38 @@
     .active {
       background-color: #aaa;
     }
+    .color-input {
+      width: 20px;
+      font-size: 6px;
+    }
   </style>
   <body>
-    <a-scene drag-and-drop>
+    <a-scene vr-mode-ui="enabled: false" drag-and-drop>
       <a-camera raycaster crawling-cursor="target: #my-cursor"><a-cursor></a-cursor></a-camera>
       <a-entity id="my-cursor" rotation="-90 0 0"></a-entity>
-      <a-entity environment="preset: egypt;"></e-entity>
+      <a-entity id="env" environment="preset: default; ground: flat"></e-entity>
     </a-scene>
     <div id="toolbar">
-      <input class="color-input" value="#F80" />
+      <select id="environment"> <!--Supplement an id here instead of using 'text'-->
+      <option value="forest">Forest</option>
+      <option value="contact" >Contact</option>
+      <option value="threetowers" >Three Towers</option>
+      <option value="poison" >Poison</option>
+      <option value="starry" >Starry</option>
+      <option value="volcano" >Volcano</option>
+      <option value="dream" >Dream</option>
+      <option value="yavapai" >Yavapai</option>
+      <option value="tron" >Tron</option>
+      <option value="goaland" >Goaland</option>
+      <option value="checkerboard" >Checkboard</option>
+      <option value="goldmine" >Goldmine</option>
+      <option value="japan" >Japan</option>
+      <option value="osiris" >Osiris</option>
+      <option value="egypt" >Egypt</option>
+      <option value="arches" >Arches</option>
+      <option value="default" selected>Default</option>
+    </select>
+      <input class="color-input"/>
       <button id="add" class="active" type="button">ADD</button>
       <button id="remove" type="button">REMOVE</button>
       <button id="edit" type="button">EDIT</button>
@@ -51,6 +74,8 @@
   // options
   notation: 'hex',
   saturations: 2,
+  setText: true,
+  customColors: ['#ffffff']
 });
   const ADD = 0;
   const REMOVE = 1;
@@ -63,19 +88,43 @@
   var selected = null;
 
   var reader  = new FileReader();
+  var colorIndex = 0;
+  var usedColor = 10;
   hueb.on( 'change', function( color, hue, sat, lum ) {
-    if (state == ADD)
+    if (state == ADD && cursor3D.getAttribute('stl-model'))
       cursor3D.setAttribute('material', 'color', color);
 
     if (state == EDIT && selected)
       selected.setAttribute('material', 'color', color);
+
+    for(var i = 0; i < hueb.options.customColors.length; i++)
+      if (hueb.options.customColors[i] == color)
+        return;
+
+    hueb.options.customColors[colorIndex] = color;
+    hueb.updateColors();
+    colorIndex++;
+    if (colorIndex > usedColor)
+      colorIndex = 0;
   })
 
   document.querySelector('#screenshot').addEventListener('click', function() {
     document.querySelector('a-scene').components.screenshot.capture('perspective');
-  })
+  });
+  document.querySelector('#environment').addEventListener('change', function() {
+    document.querySelector('#env').setAttribute('environment', 'preset', event.target.value)
+    //document.querySelector('#env').setAttribute('environment', 'ground', 'flat');
+    //document.querySelector('#env').setAttribute('environment', 'groundYScale', document.querySelector('#env').getAttribute('environment').groundYScale / 2);
+    document.querySelector('#env').setAttribute('environment', 'playArea', 1.5);
+    //document.querySelector('#env').setAttribute('environment', 'shadow', 'true');
+    document.querySelector('#env').setAttribute('environment', 'flatShading', 'true');
+    var reducedDressing = document.querySelector('#env').getAttribute('environment').dressingAmount;
+    if (reducedDressing > 50)
+    document.querySelector('#env').setAttribute('environment', 'dressingAmount', reducedDressing / 2);
+  });
   document.querySelector('#add').addEventListener('click', function() {
     state = ADD;
+    if (cursor3D.getAttribute('material'))
     hueb.setColor(cursor3D.getAttribute('material').color);
     cursor3D.setAttribute('visible', true);
     document.querySelector('.active').classList.toggle('active');
@@ -122,16 +171,15 @@
         el.setAttribute('position',{x: position.x, y: position.y, z: position.z});
         el.setAttribute('rotation', {x:rotation.x, y:rotation.y, z:rotation.z});
         el.setAttribute('material', 'color', material.color );
+
         el.addEventListener('raycaster-intersected', function () {
           selected = el;
-          //console.log(selected);
+
           if (state == EDIT)
-          hueb.setColor(selected.getAttribute('material').color)
+            hueb.setColor(selected.getAttribute('material').color)
         });
         el.addEventListener('raycaster-intersected-cleared', function () {
           selected = null;
-          //console.log(selected);
-
         });
 
         scene.appendChild(el);
@@ -180,7 +228,10 @@
         //console.log(currentRotation.y);
       }
       event.preventDefault();
-      return true;
+      //return true;
     },true)
+    document.addEventListener("wheel", function() {
+      event.preventDefault();
+    })
   </script>
 </html>
