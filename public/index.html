@@ -8,6 +8,7 @@
     <script src="./js/aframe-stl-model-component.min.js"></script>
     <script src="./js/aframe-drag-and-drop-component.min.js"></script>
     <script src="./js/aframe-crawling-cursor.min.js"></script>
+
     <script src="https://rawgit.com/feiss/aframe-environment-component/master/dist/aframe-environment-component.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/huebee@1/dist/huebee.min.css">
     <script src="https://unpkg.com/huebee@1/dist/huebee.pkgd.min.js"></script>
@@ -62,7 +63,7 @@
       <option value="arches" >Arches</option>
       <option value="default" selected>Default</option>
     </select>
-      <input class="color-input"/>
+      <input class="color-input" value="#ffffff"/>
       <button id="add" class="active" type="button">ADD</button>
       <button id="remove" type="button">REMOVE</button>
       <button id="edit" type="button">EDIT</button>
@@ -144,14 +145,21 @@
     document.querySelector('#edit').classList.toggle('active');
 
   });
-
+  var inventoryIndex = 0;
   reader.addEventListener("load", function () {
     if (state != ADD)
       return;
     cursor3D.setAttribute('stl-model', {src:reader.result});
     cursor3D.setAttribute('scale', {x:initialScale, y:initialScale, z:initialScale});
     cursor3D.setAttribute('material', 'color', hueb.color);
-
+    var listElement = document.createElement('a-entity')
+    listElement.setAttribute('position', {x:-1.6 + (.4 * inventoryIndex), y:-1, z: -1.5})
+    inventoryIndex++;
+    listElement.setAttribute('rotation', {x:-90, y:0, z: 0})
+    listElement.setAttribute('class', 'ignore-ray');
+    listElement.setAttribute('stl-model', {src:reader.result});
+    listElement.setAttribute('scale', {x:initialScale * .2, y:initialScale * .2, z:initialScale * .2});
+    document.querySelector('a-camera').appendChild(listElement)
   }, false);
 
 
@@ -159,6 +167,13 @@
       var file = event.detail.file;
       reader.readAsDataURL(file);
     });
+    window.addEventListener("keydown", function (event) {
+      console.log(event.key)
+      if (inventoryIndex + 1 > event.key) {
+        //console.log()
+        cursor3D.setAttribute('stl-model', document.querySelector('a-camera').children[event.key].getAttribute('stl-model'))
+      }
+    })
 
     window.addEventListener("contextmenu", function(event) {
       if (state == ADD && cursor3D.getAttribute('stl-model') != null) {
