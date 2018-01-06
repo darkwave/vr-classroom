@@ -39,7 +39,7 @@
   </style>
   <body>
     <a-scene vr-mode-ui="enabled: false" drag-and-drop>
-      <a-camera raycaster crawling-cursor="target: #my-cursor"><a-cursor></a-cursor></a-camera>
+      <a-entity id="my-camera" look-controls wasd-controls="fly: true; acceleration:100" camera="userHeight: 3" raycaster="far: 3; near: 2" crawling-cursor="target: #my-cursor"><a-cursor></a-cursor></a-entity>
       <a-entity id="my-cursor" rotation="-90 0 0"></a-entity>
       <a-entity id="env" environment="preset: default; ground: flat"></e-entity>
     </a-scene>
@@ -68,6 +68,9 @@
       <button id="remove" type="button">REMOVE</button>
       <button id="edit" type="button">EDIT</button>
       <button id="screenshot" type="button">SCREENSHOT</button>
+      <!-- TODO: add save/load for electron implementation
+      <button id="save" type="button">SAVE</button>
+       -->
     </div>
   </body>
   <script type="text/javascript">
@@ -109,6 +112,11 @@
       colorIndex = 0;
   })
 
+  // document.querySelector('#save').addEventListener('click', function() {
+     // TODO: save function for electron implementation
+  //   scene.flushToDOM(true);
+  //   console.log(scene);
+  // });
   document.querySelector('#screenshot').addEventListener('click', function() {
     document.querySelector('a-scene').components.screenshot.capture('perspective');
   });
@@ -153,13 +161,25 @@
     cursor3D.setAttribute('scale', {x:initialScale, y:initialScale, z:initialScale});
     cursor3D.setAttribute('material', 'color', hueb.color);
     var listElement = document.createElement('a-entity')
-    listElement.setAttribute('position', {x:-1.6 + (.4 * inventoryIndex), y:-1, z: -1.5})
-    inventoryIndex++;
+    listElement.setAttribute('position', {x:-1.8 + (.45 * inventoryIndex), y:-1, z: -1.5})
+
     listElement.setAttribute('rotation', {x:-90, y:0, z: 0})
     listElement.setAttribute('class', 'ignore-ray');
     listElement.setAttribute('stl-model', {src:reader.result});
     listElement.setAttribute('scale', {x:initialScale * .2, y:initialScale * .2, z:initialScale * .2});
-    document.querySelector('a-camera').appendChild(listElement)
+    var shortCutText = document.createElement('a-entity');
+    shortCutText.setAttribute('text', 'value: ' + (inventoryIndex + 1))
+    shortCutText.setAttribute('text', 'anchor: left')
+    shortCutText.setAttribute('text', 'baseline',"center")
+    shortCutText.setAttribute('scale', '1000 1000 1000')
+    //shortCutText.setAttribute('position', {x:-2 + (.45 * inventoryIndex), y:-1.15, z: -1.5})
+    shortCutText.setAttribute('position', {x: 0, y: 0, z: -90})
+    shortCutText.setAttribute('rotation', {x: 90, y: 0, z: 0})
+    shortCutText.object3D.layers.set(1)
+    inventoryIndex++;
+
+    listElement.appendChild(shortCutText)
+    document.querySelector('#my-camera').appendChild(listElement)
   }, false);
 
 
@@ -168,12 +188,12 @@
       reader.readAsDataURL(file);
     });
     window.addEventListener("keydown", function (event) {
-      console.log(event.key)
+      //console.log(event.key)
       if (inventoryIndex + 1 > event.key) {
         //console.log()
-        cursor3D.setAttribute('stl-model', document.querySelector('a-camera').children[event.key].getAttribute('stl-model'))
+        cursor3D.setAttribute('stl-model', document.querySelector('#my-camera').children[event.key].getAttribute('stl-model'))
       }
-    })
+    }, true)
 
     window.addEventListener("contextmenu", function(event) {
       if (state == ADD && cursor3D.getAttribute('stl-model') != null) {
@@ -192,10 +212,10 @@
 
           if (state == EDIT)
             hueb.setColor(selected.getAttribute('material').color)
-        });
+        }, true);
         el.addEventListener('raycaster-intersected-cleared', function () {
           selected = null;
-        });
+        }, true);
 
         scene.appendChild(el);
       } else if (state == REMOVE && selected) {
